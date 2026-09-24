@@ -2,482 +2,986 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MPWS Meeting Room Availability</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Room Scheduler</title>
 
-<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
-<script>
-// Fallback to the Microsoft EU CDN region if the primary (US West) CDN
-// didn't load — e.g. blocked by a corporate firewall/proxy.
-if (typeof msal === "undefined") {
-    document.write(unescape(
-        "%3Cscript src='https://alcdn.msftauth.net/browser/2.38.3/js/msal-browser.min.js' type='text/javascript'%3E%3C/script%3E"
-    ));
-}
-</script>
+
+<style type="text/css">@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:400;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:400;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:400;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/greek/wght/normal.woff2);unicode-range:U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:400;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:400;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:400;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/latin-ext/wght/normal.woff2);unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:500;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:500;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/latin-ext/wght/normal.woff2);unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:500;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:500;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:500;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/greek/wght/normal.woff2);unicode-range:U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:500;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:600;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/greek/wght/normal.woff2);unicode-range:U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:600;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:600;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/latin-ext/wght/normal.woff2);unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:600;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:600;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:600;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:700;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/latin-ext/wght/normal.woff2);unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:700;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:700;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/greek/wght/normal.woff2);unicode-range:U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:700;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:700;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:'IBM Plex Sans';font-style:normal;font-weight:700;src:url(/cf-fonts/v/ibm-plex-sans/5.2.8/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:'IBM Plex Mono';font-style:normal;font-weight:400;src:url(/cf-fonts/s/ibm-plex-mono/5.2.7/latin/400/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:'IBM Plex Mono';font-style:normal;font-weight:400;src:url(/cf-fonts/s/ibm-plex-mono/5.2.7/cyrillic/400/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:'IBM Plex Mono';font-style:normal;font-weight:400;src:url(/cf-fonts/s/ibm-plex-mono/5.2.7/latin-ext/400/normal.woff2);unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:'IBM Plex Mono';font-style:normal;font-weight:400;src:url(/cf-fonts/s/ibm-plex-mono/5.2.7/vietnamese/400/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:'IBM Plex Mono';font-style:normal;font-weight:400;src:url(/cf-fonts/s/ibm-plex-mono/5.2.7/cyrillic-ext/400/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:'IBM Plex Mono';font-style:normal;font-weight:500;src:url(/cf-fonts/s/ibm-plex-mono/5.2.7/latin-ext/500/normal.woff2);unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:'IBM Plex Mono';font-style:normal;font-weight:500;src:url(/cf-fonts/s/ibm-plex-mono/5.2.7/vietnamese/500/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:'IBM Plex Mono';font-style:normal;font-weight:500;src:url(/cf-fonts/s/ibm-plex-mono/5.2.7/cyrillic/500/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:'IBM Plex Mono';font-style:normal;font-weight:500;src:url(/cf-fonts/s/ibm-plex-mono/5.2.7/cyrillic-ext/500/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:'IBM Plex Mono';font-style:normal;font-weight:500;src:url(/cf-fonts/s/ibm-plex-mono/5.2.7/latin/500/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:'IBM Plex Mono';font-style:normal;font-weight:600;src:url(/cf-fonts/s/ibm-plex-mono/5.2.7/latin/600/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:'IBM Plex Mono';font-style:normal;font-weight:600;src:url(/cf-fonts/s/ibm-plex-mono/5.2.7/cyrillic/600/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:'IBM Plex Mono';font-style:normal;font-weight:600;src:url(/cf-fonts/s/ibm-plex-mono/5.2.7/cyrillic-ext/600/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:'IBM Plex Mono';font-style:normal;font-weight:600;src:url(/cf-fonts/s/ibm-plex-mono/5.2.7/latin-ext/600/normal.woff2);unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:'IBM Plex Mono';font-style:normal;font-weight:600;src:url(/cf-fonts/s/ibm-plex-mono/5.2.7/vietnamese/600/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}</style>
+
+<!-- Data lives in a Google Sheet, reached through a small Apps Script web app
+     (see APPS_SCRIPT_URL below and the setup notes in the reply). No SDK needed. -->
+
 <style>
-body{
-    font-family: Arial, sans-serif;
-    background:#f4f7fb;
-    margin:40px;
-}
+  :root {
+    --paper: #EFEDE4;
+    --paper-raised: #F7F5EE;
+    --ink: #24262B;
+    --ink-soft: #5B5D57;
+    --line: #D8D4C8;
+    --line-strong: #B9B4A4;
+    --accent-big: #2E6B5C;
+    --accent-board: #6B3A4A;
+    --accent-training: #34587A;
+    --accent-interview: #A67C2E;
+    --danger: #A6402F;
+    --focus: #1D6FE0;
+    --radius: 3px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #1B1C1F;
+      --paper-raised: #242529;
+      --ink: #EDEAE1;
+      --ink-soft: #9C9A91;
+      --line: #38393D;
+      --line-strong: #4B4C50;
+      --accent-big: #5FAF98;
+      --accent-board: #C97D93;
+      --accent-training: #7DA6D6;
+      --accent-interview: #E0AF5C;
+      --danger: #E2745F;
+      --focus: #6AA6FF;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #1B1C1F;
+    --paper-raised: #242529;
+    --ink: #EDEAE1;
+    --ink-soft: #9C9A91;
+    --line: #38393D;
+    --line-strong: #4B4C50;
+    --accent-big: #5FAF98;
+    --accent-board: #C97D93;
+    --accent-training: #7DA6D6;
+    --accent-interview: #E0AF5C;
+    --danger: #E2745F;
+    --focus: #6AA6FF;
+  }
 
-.container{
-    max-width:900px;
-    margin:auto;
-    background:white;
-    padding:30px;
-    border-radius:10px;
-    box-shadow:0 2px 10px rgba(0,0,0,.1);
-}
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .mono { font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace; }
 
-h1{
-    color:#0078d4;
-}
+  header.top {
+    padding: 22px 24px 16px;
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    background: var(--paper);
+    z-index: 5;
+  }
+  .top-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-logo {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 auto;
+    display: block;
+  }
+  h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .rooms-key {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+  }
+  .rooms-key span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 9px; height: 9px; border-radius: 1px; display: inline-block; }
 
-h3{
-    margin-top:0;
-}
+  .week-nav {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .week-nav button.arrow {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 14px;
+    flex: 0 0 auto;
+  }
+  .week-nav button.arrow:hover { border-color: var(--line-strong); }
+  .day-tabs {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    flex: 1;
+  }
+  .day-tab {
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    padding: 5px 12px;
+    cursor: pointer;
+    color: var(--ink-soft);
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .day-tab .dow { font-size: 11px; letter-spacing: 0.02em; }
+  .day-tab .dom { font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 500; }
+  .day-tab:hover { border-color: var(--line); }
+  .day-tab.selected {
+    border-color: var(--ink);
+    color: var(--ink);
+    background: var(--paper-raised);
+  }
+  .day-tab.today .dom { color: var(--focus); }
 
-button{
-    background:#0078d4;
-    color:white;
-    border:none;
-    padding:10px 15px;
-    margin:5px 5px 5px 0;
-    border-radius:5px;
-    cursor:pointer;
-}
+  main {
+    flex: 1;
+    padding: 20px 24px 40px;
+    overflow: auto;
+  }
+  .grid-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--paper-raised);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 74px repeat(4, minmax(148px, 1fr));
+    position: relative;
+    min-width: 714px;
+  }
+  .head-cell {
+    position: sticky;
+    top: 0;
+    background: var(--paper-raised);
+    z-index: 2;
+    padding: 10px 10px 9px;
+    border-bottom: 1px solid var(--line-strong);
+    border-left: 1px solid var(--line);
+  }
+  .head-cell:first-child { border-left: none; }
+  .head-cell .room-name { font-size: 13px; font-weight: 600; }
+  .head-cell .bar { height: 3px; border-radius: 2px; margin-top: 7px; }
+  .time-cell {
+    border-top: 1px solid var(--line);
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    padding: 3px 8px 0 0;
+    text-align: right;
+    position: relative;
+    white-space: nowrap;
+  }
+  .time-cell.hour { color: var(--ink); font-weight: 500; }
+  .slot-btn {
+    border: none;
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+  }
+  .slot-btn:hover { background: rgba(29, 111, 224, 0.08); }
+  .slot-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; z-index: 3; }
+  .slot-btn.hour-line { border-top: 1px solid var(--line-strong); }
 
-button:hover{
-    background:#106ebe;
-}
+  .booking-block {
+    border-radius: var(--radius);
+    margin: 1px 4px;
+    padding: 5px 8px;
+    font-size: 12px;
+    line-height: 1.35;
+    cursor: pointer;
+    color: #fff;
+    overflow: hidden;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .booking-block .b-title { font-weight: 600; }
+  .booking-block .b-who { opacity: 0.88; font-size: 11px; }
+  .booking-block.mine { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55); }
+  .booking-block.pending {
+    background-image: repeating-linear-gradient(
+      135deg, rgba(255,255,255,0.28) 0 8px, rgba(255,255,255,0.06) 8px 16px
+    ) !important;
+    opacity: 0.9;
+  }
+  .booking-block .b-status { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.85; }
+  .booking-block:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 
-button.secondary{
-    background:#e4e9ef;
-    color:#0078d4;
-}
+  .toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 14px;
+  }
+  .btn {
+    font-family: inherit;
+    font-size: 13px;
+    padding: 8px 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--line-strong);
+    background: var(--paper-raised);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .btn:hover { border-color: var(--ink); }
+  .btn.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .btn.primary:hover { opacity: 0.9; }
+  .btn.danger { color: var(--danger); border-color: var(--danger); background: transparent; }
+  .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
 
-button.secondary:hover{
-    background:#d3dbe4;
-}
+  /* Modal */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 20, 18, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 20;
+    animation: fade-in 0.12s ease-out;
+  }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    background: var(--paper-raised);
+    border: 1px solid var(--line-strong);
+    border-radius: 5px;
+    width: 100%;
+    max-width: 380px;
+    padding: 20px;
+    animation: rise-in 0.14s ease-out;
+  }
+  @keyframes rise-in { from { transform: translateY(6px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal h2 { margin: 0 0 3px; font-size: 16px; }
+  .modal .sub { color: var(--ink-soft); font-size: 12.5px; margin-bottom: 16px; }
+  .modal label {
+    display: block;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin: 12px 0 5px;
+  }
+  .modal input[type=text], .modal select {
+    width: 100%;
+    font-family: inherit;
+    font-size: 14px;
+    padding: 8px 9px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .modal input:focus, .modal select:focus { outline: 2px solid var(--focus); outline-offset: 1px; }
+  .modal-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 20px;
+  }
+  .modal-actions .left { display: flex; gap: 8px; }
+  .warn {
+    font-size: 12px;
+    color: var(--danger);
+    margin-top: 8px;
+    min-height: 14px;
+  }
+  .view-row { font-size: 13.5px; margin: 4px 0; }
+  .view-row .lbl { color: var(--ink-soft); display: inline-block; width: 64px; }
 
-button.secondary.active{
-    background:#0078d4;
-    color:white;
-}
+  .status-line {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 10px;
+  }
 
-select,input{
-    width:100%;
-    padding:10px;
-    margin-top:10px;
-    margin-bottom:15px;
-    box-sizing:border-box;
-}
-
-.result{
-    margin-top:20px;
-    padding:15px;
-    background:#f9f9f9;
-    border:1px solid #ddd;
-    border-radius:5px;
-    white-space:pre-wrap;
-}
-
-.view-toggle{
-    margin-bottom:15px;
-}
-
-.view-panel{
-    display:none;
-}
-
-.view-panel.active{
-    display:block;
-}
-
-/* Calendar view */
-.cal-controls{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    margin-bottom:15px;
-}
-
-.cal-controls input[type="date"]{
-    margin:0;
-    width:auto;
-    flex:1;
-}
-
-.cal-grid{
-    border:1px solid #ddd;
-    border-radius:5px;
-    overflow:hidden;
-}
-
-.cal-row{
-    display:grid;
-    grid-template-columns:70px 1fr;
-    border-bottom:1px solid #eee;
-}
-
-.cal-row:last-child{
-    border-bottom:none;
-}
-
-.cal-time{
-    padding:6px 8px;
-    font-size:12px;
-    color:#666;
-    background:#fafafa;
-    border-right:1px solid #eee;
-}
-
-.cal-slot{
-    padding:6px 8px;
-    font-size:13px;
-}
-
-.cal-slot.free{
-    background:#e9f9ee;
-    color:#1a7d3a;
-}
-
-.cal-slot.busy{
-    background:#fdecec;
-    color:#c62828;
-}
-
-.cal-slot.unknown{
-    background:#f4f4f4;
-    color:#888;
-}
-
-.legend{
-    margin-top:10px;
-    font-size:12px;
-    color:#666;
-}
-
-.legend span{
-    display:inline-block;
-    width:10px;
-    height:10px;
-    border-radius:2px;
-    margin-right:4px;
-    vertical-align:middle;
-}
+  @media (max-width: 560px) {
+    header.top { padding: 16px 16px 12px; }
+    main { padding: 14px 12px 32px; }
+    h1 { font-size: 17px; }
+  }
 </style>
 </head>
 <body>
 
-<div class="container">
-
-<h1>MPWS Meeting Room Scheduler</h1>
-
-<button onclick="login()">Login with Microsoft 365</button>
-
-<h3>Room</h3>
-
-<select id="room">
-    <option value="boardroom@mpws.com.ph">MPWS Board Room</option>
-    <option value="bigmeetingroom@mpws.com.ph">MPWS Big Meeting Room</option>
-    <option value="trainingroom@mpws.com.ph">MPWS Training Room</option>
-</select>
-
-<div class="view-toggle">
-    <button class="secondary active" id="btnViewCheck" onclick="switchView('check')">Check a time</button>
-    <button class="secondary" id="btnViewCalendar" onclick="switchView('calendar')">Calendar view</button>
-</div>
-
-<!-- Single time-range check -->
-<div class="view-panel active" id="panel-check">
-
-    <label>Date</label>
-    <input type="date" id="meetingDate">
-
-    <label>Start Time</label>
-    <input type="time" id="startTime">
-
-    <label>End Time</label>
-    <input type="time" id="endTime">
-
-    <button onclick="checkAvailability()">Check Availability</button>
-
-    <div id="result" class="result"></div>
-
-</div>
-
-<!-- Day calendar view -->
-<div class="view-panel" id="panel-calendar">
-
-    <div class="cal-controls">
-        <input type="date" id="calDate">
-        <button onclick="loadDayCalendar()">Load Day</button>
+<header class="top">
+  <div class="top-row">
+    <div class="brand">
+      <img class="brand-logo" src="data:image/png;base64,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" alt="Metro Pacific Water Solutions logo">
+      <h1>Room Scheduler</h1>
     </div>
+    <div class="rooms-key" id="roomsKey"></div>
+  </div>
+  <div class="week-nav">
+    <button class="arrow" id="prevWeek" aria-label="Previous week">&larr;</button>
+    <div class="day-tabs" id="dayTabs"></div>
+    <button class="arrow" id="nextWeek" aria-label="Next week">&rarr;</button>
+  </div>
+</header>
 
-    <div id="calGrid" class="cal-grid"></div>
+<main>
+  <div class="grid-wrap">
+    <div class="grid" id="grid"></div>
+  </div>
+  <div class="toolbar">
+    <button class="btn" id="exportBtn">Export week as CSV (Excel)</button>
+  </div>
 
-    <div class="legend">
-        <span style="background:#e9f9ee;"></span>Free
-        <span style="background:#fdecec;margin-left:12px;"></span>Busy
-        <span style="background:#f4f4f4;margin-left:12px;"></span>No data
-    </div>
+  </div>
+  <div class="status-line" id="statusLine" role="status" aria-live="polite"></div>
+</main>
 
-</div>
-
-</div>
+<div id="modalRoot"></div>
 
 <script>
+(function () {
+  "use strict";
 
-const msalConfig = {
-    auth: {
-        clientId: "9dc5b578-6f1d-4d42-aad1-4c46cb068caf",
-        authority: "https://login.microsoftonline.com/b6430d0a-2d9f-4c12-ae6e-5b4d8aad7644",
-        redirectUri: "http://localhost:5500"
+  /* ---------- Configuration ---------- */
+
+  var ROOMS = [
+    { id: "big",       name: "BIG Meeting Room", color: "var(--accent-big)" },
+    { id: "board",     name: "Board Room",       color: "var(--accent-board)" },
+    { id: "training",  name: "Training Room",    color: "var(--accent-training)" },
+    { id: "interview", name: "Interview Room",   color: "var(--accent-interview)" }
+  ];
+
+  var START_HOUR = 8;
+  var END_HOUR = 18;
+  var SLOT_MIN = 30;
+  var SLOT_COUNT = ((END_HOUR - START_HOUR) * 60) / SLOT_MIN; // 20 half-hour slots
+  var DURATIONS = [30, 60, 90, 120];
+  var DAYS_IN_WEEK = 5;
+
+  /* URL of the deployed Google Apps Script web app that reads/writes the
+     Google Sheet used as the database. Fill this in — see setup notes.
+     Leave it empty and the page runs in read-only preview mode. */
+  var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzeoNKBADUemNwVPvzZQg9vWK1chkvVRMLK0Qe_q8vOt3kCVorKkr8G4LMRzzOP_wy-6g/exec";
+
+  // How often to re-poll the sheet for changes made by other people (ms).
+  var POLL_MS = 15000;
+
+  var DOW = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  /* ---------- Date helpers ---------- */
+
+  function pad2(n) { return n < 10 ? "0" + n : "" + n; }
+
+  function isoDate(d) {
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+  }
+
+  function mondayOf(d) {
+    var x = new Date(d);
+    var day = x.getDay(); // 0 Sun .. 6 Sat
+    x.setDate(x.getDate() + (day === 0 ? -6 : 1 - day));
+    x.setHours(0, 0, 0, 0);
+    return x;
+  }
+
+  function addDays(d, n) {
+    var x = new Date(d);
+    x.setDate(x.getDate() + n);
+    return x;
+  }
+
+  function slotToLabel(i) {
+    var totalMin = START_HOUR * 60 + i * SLOT_MIN;
+    var h24 = Math.floor(totalMin / 60);
+    var m = totalMin % 60;
+    var h12 = h24 % 12 || 12;
+    return h12 + ":" + pad2(m) + " " + (h24 < 12 ? "AM" : "PM");
+  }
+
+  function escapeHtml(s) {
+    var d = document.createElement("div");
+    d.textContent = s == null ? "" : String(s);
+    return d.innerHTML;
+  }
+
+  function formatError(err, fallback) {
+    return (err && err.code) ? err.code : (err && err.message) ? err.message : (fallback || "error");
+  }
+
+  /* ---------- State ---------- */
+
+  var today = new Date();
+  var todayIso = isoDate(today);
+  var thisWeekStart = mondayOf(today);
+
+  var weekStart = thisWeekStart;
+  // Start on today, or on Monday when today falls on a weekend.
+  var selectedDate = (today.getDay() === 0 || today.getDay() === 6)
+    ? isoDate(thisWeekStart)
+    : todayIso;
+
+  var pollTimer = null;
+  var bookings = [];
+  var myId = getDeviceId();
+  var myName = "";
+  try { myName = localStorage.getItem("roomScheduler.name") || ""; } catch (e) {}
+  var myEmail = "";
+  try { myEmail = localStorage.getItem("roomScheduler.email") || ""; } catch (e) {}
+  var pendingWrite = false;
+
+  // A per-browser id so "Cancel booking" only appears on bookings made from
+  // this device — there's no sign-in, so this is a light-touch stand-in for it.
+  function getDeviceId() {
+    try {
+      var id = localStorage.getItem("roomScheduler.deviceId");
+      if (!id) {
+        id = "dev-" + Date.now() + "-" + Math.random().toString(36).slice(2);
+        localStorage.setItem("roomScheduler.deviceId", id);
+      }
+      return id;
+    } catch (e) {
+      return "dev-" + Date.now();
     }
-};
+  }
 
-let msalInstance = null;
-let accessToken = "";
-let account = null;
+  var gridEl = document.getElementById("grid");
+  var dayTabsEl = document.getElementById("dayTabs");
+  var roomsKeyEl = document.getElementById("roomsKey");
+  var statusEl = document.getElementById("statusLine");
+  var modalRoot = document.getElementById("modalRoot");
+  var exportBtn = document.getElementById("exportBtn");
 
-const GRAPH_SCOPES = [
-    "User.Read",
-    "Calendars.ReadWrite",
-    "Place.Read.All"
-];
+  function ready() { return !!APPS_SCRIPT_URL; }
 
-if (typeof msal === "undefined") {
+  /* ---------- Sheet API (Google Apps Script web app) ---------- */
 
-    // Both CDN regions failed to load — almost always a network/firewall
-    // block rather than a code problem. Surface this clearly instead of
-    // letting later code throw a confusing "before initialization" error.
-    window.addEventListener("DOMContentLoaded", function () {
-        document.getElementById("result").innerHTML =
-            "⚠️ Could not load the Microsoft sign-in library (MSAL). " +
-            "This usually means your network or firewall is blocking " +
-            "alcdn.msauth.net / alcdn.msftauth.net. Try a different " +
-            "network, or ask IT to allow those domains.";
+  function sheetList(dateIso) {
+    var url = APPS_SCRIPT_URL + "?date=" + encodeURIComponent(dateIso);
+    return fetch(url).then(function (res) {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }).then(function (data) {
+      if (!data || data.ok === false) throw new Error((data && data.error) || "request failed");
+      return data.bookings || [];
+    });
+  }
+
+  function sheetCreate(payload) {
+    // Sent as text/plain so the browser doesn't send a CORS preflight —
+    // Apps Script web apps don't respond to OPTIONS requests.
+    return fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(Object.assign({ action: "create" }, payload))
+    }).then(function (res) {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }).then(function (data) {
+      if (!data || data.ok === false) throw new Error((data && data.error) || "request failed");
+      return data;
+    });
+  }
+
+  function sheetDelete(id) {
+    return fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "delete", id: id })
+    }).then(function (res) {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }).then(function (data) {
+      if (!data || data.ok === false) throw new Error((data && data.error) || "request failed");
+      return data;
+    });
+  }
+
+  function roomById(id) {
+    for (var i = 0; i < ROOMS.length; i++) {
+      if (ROOMS[i].id === id) return ROOMS[i];
+    }
+    return null;
+  }
+
+  /* ---------- Rendering ---------- */
+
+  function renderRoomsKey() {
+    roomsKeyEl.innerHTML = ROOMS.map(function (r) {
+      return '<span><span class="swatch" style="background:' + r.color + '"></span>' +
+        escapeHtml(r.name) + "</span>";
+    }).join("");
+  }
+
+  function renderDayTabs() {
+    var html = "";
+    for (var i = 0; i < DAYS_IN_WEEK; i++) {
+      var d = addDays(weekStart, i);
+      var iso = isoDate(d);
+      var cls = "day-tab" +
+        (iso === selectedDate ? " selected" : "") +
+        (iso === todayIso ? " today" : "");
+      html += '<button type="button" class="' + cls + '" data-date="' + iso + '"' +
+        (iso === selectedDate ? ' aria-current="date"' : "") + ">" +
+        '<span class="dow">' + DOW[i] + "</span>" +
+        '<span class="dom mono">' + d.getDate() + " " + MONTHS[d.getMonth()] + "</span>" +
+        "</button>";
+    }
+    dayTabsEl.innerHTML = html;
+  }
+
+  function renderGridShell() {
+    var html = '<div class="head-cell"></div>';
+
+    ROOMS.forEach(function (r) {
+      html += '<div class="head-cell"><div class="room-name">' + escapeHtml(r.name) +
+        '</div><div class="bar" style="background:' + r.color + '"></div></div>';
     });
 
-} else {
+    for (var i = 0; i < SLOT_COUNT; i++) {
+      var isHour = (i % 2) === 0;
+      html += '<div class="time-cell' + (isHour ? " hour" : "") + ' mono" style="grid-row:' + (i + 2) + '">' +
+        (isHour ? slotToLabel(i) : "") + "</div>";
 
-    msalInstance = new msal.PublicClientApplication(msalConfig);
-
-}
-
-function switchView(view) {
-
-    document.getElementById("panel-check").classList.toggle("active", view === "check");
-    document.getElementById("panel-calendar").classList.toggle("active", view === "calendar");
-
-    document.getElementById("btnViewCheck").classList.toggle("active", view === "check");
-    document.getElementById("btnViewCalendar").classList.toggle("active", view === "calendar");
-}
-
-async function login() {
-
-    if (!msalInstance) {
-        alert("The Microsoft sign-in library didn't load — check your network/firewall (see the message below the form) and reload the page.");
-        return;
+      for (var c = 0; c < ROOMS.length; c++) {
+        html += '<button type="button" class="slot-btn' + (isHour ? " hour-line" : "") + '" ' +
+          'style="grid-column:' + (c + 2) + ";grid-row:" + (i + 2) + ';" ' +
+          'data-room="' + ROOMS[c].id + '" data-slot="' + i + '" ' +
+          'aria-label="Book ' + escapeHtml(ROOMS[c].name) + " at " + slotToLabel(i) + '"></button>';
+      }
     }
 
-    try {
+    gridEl.innerHTML = html;
+  }
 
-        const loginResponse = await msalInstance.loginPopup({
-            scopes: GRAPH_SCOPES
-        });
+  function renderBookingOverlays() {
+    // Remove only the overlay blocks, leaving the slot grid intact.
+    Array.prototype.forEach.call(gridEl.querySelectorAll(".booking-block"), function (el) {
+      el.remove();
+    });
 
-        account = loginResponse.account;
+    bookings.forEach(function (b) {
+      var colIndex = ROOMS.findIndex(function (r) { return r.id === b.room; });
+      if (colIndex === -1) return;
 
-        const tokenResponse =
-        await msalInstance.acquireTokenSilent({
-            account: account,
-            scopes: GRAPH_SCOPES
-        });
+      var room = ROOMS[colIndex];
+      var start = Math.max(0, b.startSlot);
+      var end = Math.min(SLOT_COUNT, b.endSlot);
+      if (end <= start) return;
 
-        accessToken = tokenResponse.accessToken;
+      var el = document.createElement("div");
+      el.className = "booking-block" +
+        (myId && b.bookedById === myId ? " mine" : "") +
+        (isPending(b) ? " pending" : "");
+      el.style.gridColumn = String(colIndex + 2);
+      el.style.gridRow = (start + 2) + " / " + (end + 2);
+      el.style.background = room.color;
+      el.tabIndex = 0;
+      el.setAttribute("role", "button");
+      el.innerHTML = '<span class="b-title">' + escapeHtml(b.title || room.name) + "</span>" +
+        '<span class="b-who">' + escapeHtml(b.bookedByName || "Someone") + "</span>" +
+        (isPending(b) ? '<span class="b-status">Pending approval</span>' : "");
 
-        document.getElementById("result").innerHTML =
-        "✅ Successfully connected to Microsoft 365";
-
-    }
-    catch(error){
-        console.error(error);
-        alert(error.message);
-    }
-}
-
-async function getSchedule(room, startDateTime, endDateTime, intervalMinutes) {
-
-    const response = await fetch(
-        "https://graph.microsoft.com/v1.0/me/calendar/getSchedule",
-        {
-            method: "POST",
-            headers: {
-                "Authorization": "Bearer " + accessToken,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                schedules: [room],
-                startTime: {
-                    dateTime: startDateTime,
-                    timeZone: "Singapore Standard Time"
-                },
-                endTime: {
-                    dateTime: endDateTime,
-                    timeZone: "Singapore Standard Time"
-                },
-                availabilityViewInterval: intervalMinutes
-            })
-        });
-
-    if (!response.ok) {
-        const errBody = await response.text();
-        throw new Error("Graph API error " + response.status + ": " + errBody);
-    }
-
-    const data = await response.json();
-
-    if (!data.value || !data.value[0]) {
-        throw new Error("No schedule data returned for this room.");
-    }
-
-    return data.value[0];
-}
-
-async function checkAvailability() {
-
-    if(!accessToken){
-        alert("Please login first.");
-        return;
-    }
-
-    const room = document.getElementById("room").value;
-    const date = document.getElementById("meetingDate").value;
-    const start = document.getElementById("startTime").value;
-    const end = document.getElementById("endTime").value;
-
-    if(!date || !start || !end){
-        alert("Please enter date and time.");
-        return;
-    }
-
-    const startDateTime = date + "T" + start + ":00";
-    const endDateTime = date + "T" + end + ":00";
-
-    try {
-
-        const schedule = await getSchedule(room, startDateTime, endDateTime, 30);
-
-        if (
-            schedule.availabilityView &&
-            schedule.availabilityView.includes("1")
-        ) {
-            document.getElementById("result").innerHTML =
-            "❌ Room is NOT available during the selected time.";
+      el.addEventListener("click", function () { openViewModal(b); });
+      el.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openViewModal(b);
         }
-        else {
-            document.getElementById("result").innerHTML =
-            "✅ Room is available.";
-        }
+      });
 
-        console.log(schedule);
+      gridEl.appendChild(el);
+    });
+  }
 
-    } catch(error) {
+  function setStatus(text) { statusEl.textContent = text; }
 
-        console.error(error);
+  function describeDay(count) {
+    if (!count) return "No bookings yet for this day.";
+    var pendingCount = bookings.filter(function (b) { return isPending(b); }).length;
+    var base = count + " booking" + (count === 1 ? "" : "s") + " on this day.";
+    if (pendingCount) base += " " + pendingCount + " awaiting approval.";
+    return base;
+  }
 
-        document.getElementById("result").innerHTML =
-        "Error checking availability: " + error.message;
+  function isPending(b) {
+    return String(b.status || "").toLowerCase() === "pending";
+  }
 
+  /* ---------- Data subscription ---------- */
+
+  function subscribeToDate(dateIso) {
+    if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+
+    if (!ready()) {
+      bookings = [];
+      renderBookingOverlays();
+      return; // status line is owned by init() in this mode
     }
-}
 
-async function loadDayCalendar() {
+    // Keep the current day's blocks on screen until the new fetch lands,
+    // instead of blanking the grid on every tab click.
+    setStatus("Loading availability…");
 
-    if(!accessToken){
-        alert("Please login first.");
+    function poll() {
+      sheetList(dateIso).then(function (rows) {
+        // A day switch may have happened while this request was in flight.
+        if (dateIso !== selectedDate) return;
+        bookings = rows.map(function (data) {
+          return {
+            id: data.id,
+            room: data.room,
+            date: data.date,
+            startSlot: Number(data.startSlot),
+            endSlot: Number(data.endSlot),
+            title: data.title,
+            bookedById: data.bookedById || null,
+            bookedByName: data.bookedByName || "",
+            status: (data.status || "Approved")
+          };
+        });
+        renderBookingOverlays();
+        setStatus(describeDay(bookings.length));
+        pollTimer = setTimeout(poll, POLL_MS);
+      }).catch(function (err) {
+        setStatus("Couldn't load availability (" + formatError(err) + "). Retrying…");
+        pollTimer = setTimeout(poll, POLL_MS);
+      });
+    }
+
+    poll();
+  }
+
+  // Re-fetch the current day right away, e.g. right after this device books
+  // or cancels something, so it doesn't wait for the next poll tick.
+  function refreshNow() {
+    subscribeToDate(selectedDate);
+  }
+
+  function overlaps(roomId, startSlot, endSlot, ignoreId) {
+    return bookings.some(function (b) {
+      if (b.room !== roomId) return false;
+      if (ignoreId && b.id === ignoreId) return false;
+      return startSlot < b.endSlot && endSlot > b.startSlot;
+    });
+  }
+
+  /* ---------- Modals ---------- */
+
+  function closeModal() { modalRoot.innerHTML = ""; }
+
+  function wireModalDismiss() {
+    document.getElementById("ovl").addEventListener("click", function (e) {
+      if (e.target.id === "ovl") closeModal();
+    });
+  }
+
+  function openCreateModal(roomId, startSlot) {
+    var room = roomById(roomId);
+    if (!room) return;
+
+    var maxDuration = (SLOT_COUNT - startSlot) * SLOT_MIN;
+    var durationOptions = DURATIONS.filter(function (m) { return m <= maxDuration; });
+    if (!durationOptions.length) durationOptions = [maxDuration];
+
+    modalRoot.innerHTML =
+      '<div class="overlay" id="ovl">' +
+        '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">' +
+          '<h2 id="mTitle">Book ' + escapeHtml(room.name) + "</h2>" +
+          '<div class="sub mono">' + selectedDate + " · starts " + slotToLabel(startSlot) + "</div>" +
+          '<label for="fName">Your name</label>' +
+          '<input type="text" id="fName" placeholder="e.g. Jamie Cruz" value="' + escapeHtml(myName) + '">' +
+          '<label for="fEmail">Your email</label>' +
+          '<input type="email" id="fEmail" placeholder="e.g. jamie@company.com" value="' + escapeHtml(myEmail) + '">' +
+          '<label for="fTitle">Meeting title</label>' +
+          '<input type="text" id="fTitle" placeholder="e.g. Weekly sync" maxlength="80">' +
+          '<label for="fDuration">Duration</label>' +
+          '<select id="fDuration">' +
+            durationOptions.map(function (m) {
+              var label = m < 60
+                ? m + " min"
+                : (m % 60 === 0 ? (m / 60) + " hr" : (m / 60).toFixed(1) + " hr");
+              return '<option value="' + m + '">' + label + "</option>";
+            }).join("") +
+          "</select>" +
+          '<div class="warn" id="fWarn" role="alert"></div>' +
+          '<div class="modal-actions">' +
+            '<div class="left"><button class="btn" id="btnCancel">Cancel</button></div>' +
+            '<button class="btn primary" id="btnBook">Send for approval</button>' +
+          "</div>" +
+        "</div>" +
+      "</div>";
+
+    var nameEl = document.getElementById("fName");
+    var emailEl = document.getElementById("fEmail");
+    var titleEl = document.getElementById("fTitle");
+    var durationEl = document.getElementById("fDuration");
+    var warnEl = document.getElementById("fWarn");
+    var btn = document.getElementById("btnBook");
+
+    document.getElementById("btnCancel").addEventListener("click", closeModal);
+    wireModalDismiss();
+    nameEl.focus();
+
+    btn.addEventListener("click", function () {
+      var nameVal = nameEl.value.trim();
+      var emailVal = emailEl.value.trim();
+      var titleVal = titleEl.value.trim();
+      var durMin = parseInt(durationEl.value, 10);
+      warnEl.textContent = "";
+
+      if (!nameVal) {
+        warnEl.textContent = "Enter your name so others know who booked it.";
         return;
-    }
+      }
 
-    const room = document.getElementById("room").value;
-    const date = document.getElementById("calDate").value;
-
-    if(!date){
-        alert("Please choose a date.");
+      if (!emailVal || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+        warnEl.textContent = "Enter a valid email so we can tell you when it's approved.";
         return;
+      }
+
+      var endSlot = startSlot + Math.round(durMin / SLOT_MIN);
+
+      if (overlaps(roomId, startSlot, endSlot, null)) {
+        warnEl.textContent = "That room already has a pending or approved request in part of this window.";
+        return;
+      }
+
+      if (pendingWrite) return;
+      pendingWrite = true;
+      btn.disabled = true;
+      btn.textContent = "Sending…";
+
+      myName = nameVal;
+      myEmail = emailVal;
+      try {
+        localStorage.setItem("roomScheduler.name", nameVal);
+        localStorage.setItem("roomScheduler.email", emailVal);
+      } catch (e) {}
+
+      sheetCreate({
+        room: roomId,
+        date: selectedDate,
+        startSlot: startSlot,
+        endSlot: endSlot,
+        title: titleVal || room.name,
+        bookedById: myId,
+        bookedByName: nameVal,
+        bookedByEmail: emailVal
+      }).then(function () {
+        closeModal();
+        refreshNow();
+      }).catch(function (err) {
+        btn.disabled = false;
+        btn.textContent = "Send for approval";
+        warnEl.textContent = "Couldn't send that request (" + formatError(err) + "). Try again.";
+      }).then(function () {
+        pendingWrite = false;
+      });
+    });
+  }
+
+  function openViewModal(b) {
+    var room = roomById(b.room);
+    if (!room) return;
+
+    var mine = !!myId && b.bookedById === myId;
+    var pending = isPending(b);
+
+    modalRoot.innerHTML =
+      '<div class="overlay" id="ovl">' +
+        '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="vTitle">' +
+          '<h2 id="vTitle">' + escapeHtml(b.title || room.name) + "</h2>" +
+          '<div class="sub">' + escapeHtml(room.name) + "</div>" +
+          '<div class="view-row"><span class="lbl">When</span><span class="mono">' +
+            escapeHtml(b.date) + ", " + slotToLabel(b.startSlot) + "–" + slotToLabel(b.endSlot) + "</span></div>" +
+          '<div class="view-row"><span class="lbl">Booked by</span>' +
+            escapeHtml(b.bookedByName || "Someone") + "</div>" +
+          '<div class="view-row"><span class="lbl">Status</span>' +
+            (pending ? "Pending approval" : escapeHtml(b.status || "Approved")) + "</div>" +
+          '<div class="warn" id="vWarn" role="alert"></div>' +
+          '<div class="modal-actions">' +
+            '<div class="left"><button class="btn" id="btnClose">Close</button></div>' +
+            (mine
+              ? '<button class="btn danger" id="btnCancelBooking">' +
+                (pending ? "Withdraw request" : "Cancel booking") + "</button>"
+              : "") +
+          "</div>" +
+        "</div>" +
+      "</div>";
+
+    document.getElementById("btnClose").addEventListener("click", closeModal);
+    wireModalDismiss();
+
+    var cancelBtn = document.getElementById("btnCancelBooking");
+    if (!cancelBtn) return;
+    var cancelLabel = pending ? "Withdraw request" : "Cancel booking";
+    var cancellingLabel = pending ? "Withdrawing…" : "Cancelling…";
+
+    cancelBtn.addEventListener("click", function () {
+      cancelBtn.disabled = true;
+      cancelBtn.textContent = cancellingLabel;
+      sheetDelete(b.id).then(function () {
+        closeModal();
+        refreshNow();
+      }).catch(function (err) {
+        cancelBtn.disabled = false;
+        cancelBtn.textContent = cancelLabel;
+        document.getElementById("vWarn").textContent =
+          "Couldn't do that (" + formatError(err) + ").";
+      });
+    });
+  }
+
+  /* ---------- CSV export ---------- */
+
+  function csvEscape(v) {
+    var s = v == null ? "" : String(v);
+    if (/[",\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  function exportWeekCsv() {
+    if (!ready()) {
+      setStatus("Export unavailable right now.");
+      return;
     }
 
-    const grid = document.getElementById("calGrid");
-    grid.innerHTML = "Loading...";
-
-    const dayStart = date + "T07:00:00";
-    const dayEnd = date + "T19:00:00";
-    const intervalMinutes = 30;
-
-    try {
-
-        const schedule = await getSchedule(room, dayStart, dayEnd, intervalMinutes);
-        renderDayCalendar(schedule, dayStart, intervalMinutes);
-
-    } catch(error) {
-
-        console.error(error);
-        grid.innerHTML = "Error loading calendar: " + error.message;
-
-    }
-}
-
-function renderDayCalendar(schedule, dayStartIso, intervalMinutes) {
-
-    const grid = document.getElementById("calGrid");
-    grid.innerHTML = "";
-
-    const view = schedule.availabilityView || "";
-    const startTime = new Date(dayStartIso);
-
-    for (let i = 0; i < view.length; i++) {
-
-        const slotStart = new Date(startTime.getTime() + i * intervalMinutes * 60000);
-        const label = slotStart.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-        const status = view[i];
-        let cssClass = "unknown";
-        let text = "No data";
-
-        if (status === "0") {
-            cssClass = "free";
-            text = "Free";
-        } else if (status === "1" || status === "2" || status === "3") {
-            cssClass = "busy";
-            text = "Busy";
-        }
-
-        const row = document.createElement("div");
-        row.className = "cal-row";
-
-        const timeCell = document.createElement("div");
-        timeCell.className = "cal-time";
-        timeCell.textContent = label;
-
-        const slotCell = document.createElement("div");
-        slotCell.className = "cal-slot " + cssClass;
-        slotCell.textContent = text;
-
-        row.appendChild(timeCell);
-        row.appendChild(slotCell);
-        grid.appendChild(row);
+    var weekDates = [];
+    for (var i = 0; i < DAYS_IN_WEEK; i++) {
+      weekDates.push(isoDate(addDays(weekStart, i)));
     }
 
-    if (view.length === 0) {
-        grid.innerHTML = "No availability data returned for this day.";
-    }
-}
+    exportBtn.disabled = true;
+    exportBtn.textContent = "Preparing export…";
 
+    function resetExportBtn() {
+      exportBtn.disabled = false;
+      exportBtn.textContent = "Export week as CSV (Excel)";
+    }
+
+    Promise.all(weekDates.map(function (dateIso) {
+      return sheetList(dateIso).then(function (rows) {
+        return rows.map(function (data) {
+          return {
+            date: dateIso,
+            room: data.room,
+            startSlot: Number(data.startSlot),
+            endSlot: Number(data.endSlot),
+            title: data.title,
+            bookedByName: data.bookedByName,
+            status: data.status || "Approved"
+          };
+        });
+      });
+    })).then(function (perDay) {
+      var rows = [["Date", "Room", "Start", "End", "Title", "Booked by", "Status"]];
+
+      perDay.forEach(function (list) {
+        list.sort(function (a, b) { return a.startSlot - b.startSlot; });
+        list.forEach(function (b) {
+          var room = roomById(b.room);
+          rows.push([
+            b.date,
+            room ? room.name : b.room,
+            slotToLabel(b.startSlot),
+            slotToLabel(b.endSlot),
+            b.title || "",
+            b.bookedByName || "",
+            b.status || ""
+          ]);
+        });
+      });
+
+      var csv = rows.map(function (r) { return r.map(csvEscape).join(","); }).join("\r\n");
+      var filename = "room-bookings-" + weekDates[0] + "-to-" + weekDates[DAYS_IN_WEEK - 1] + ".csv";
+
+      var blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      var link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+      resetExportBtn();
+    }).catch(function (err) {
+      resetExportBtn();
+      setStatus("Couldn't gather this week's bookings for export (" + formatError(err) + ").");
+    });
+  }
+  exportBtn.addEventListener("click", exportWeekCsv);
+
+  /* ---------- Init ---------- */
+
+  function init() {
+    renderRoomsKey();
+    renderDayTabs();
+    renderGridShell();
+
+    // Week / day navigation
+    document.getElementById("prevWeek").addEventListener("click", function () { shiftWeek(-7); });
+    document.getElementById("nextWeek").addEventListener("click", function () { shiftWeek(7); });
+
+    dayTabsEl.addEventListener("click", function (e) {
+      var btn = e.target.closest(".day-tab");
+      if (!btn) return;
+      selectDate(btn.getAttribute("data-date"));
+    });
+
+    gridEl.addEventListener("click", function (e) {
+      var btn = e.target.closest(".slot-btn");
+      if (!btn) return;
+      openCreateModal(btn.getAttribute("data-room"), parseInt(btn.getAttribute("data-slot"), 10));
+    });
+
+    if (!ready()) {
+      setStatus("Preview mode — bookings are not saved. Add an Apps Script URL to enable saving.");
+    }
+
+    subscribeToDate(selectedDate);
+  }
+
+  function selectDate(iso) {
+    selectedDate = iso;
+    renderDayTabs();
+    subscribeToDate(selectedDate);
+  }
+
+  function shiftWeek(deltaDays) {
+    weekStart = mondayOf(addDays(weekStart, deltaDays));
+    selectDate(isoDate(weekStart));
+  }
+
+  init();
+})();
 </script>
-
 </body>
 </html>
