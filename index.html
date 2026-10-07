@@ -367,6 +367,7 @@
   </div>
   <div class="toolbar">
     <button class="btn" id="exportBtn">Export week as CSV (Excel)</button>
+    <button class="btn" id="managerBtn">Manager login</button>
   </div>
 
   </div>
@@ -470,6 +471,10 @@
   var myEmail = "";
   try { myEmail = localStorage.getItem("roomScheduler.email") || ""; } catch (e) {}
   var pendingWrite = false;
+  // Set after a successful manager sign-in: {email, pin, name, rooms:[roomIds]}.
+  // Kept only for this tab (sessionStorage); the server re-checks it on every cancel.
+  var manager = null;
+  try { manager = JSON.parse(sessionStorage.getItem("roomScheduler.manager") || "null"); } catch (e) {}
 
   // A per-browser id so "Cancel booking" only appears on bookings made from
   // this device — there's no sign-in, so this is a light-touch stand-in for it.
@@ -492,6 +497,7 @@
   var statusEl = document.getElementById("statusLine");
   var modalRoot = document.getElementById("modalRoot");
   var exportBtn = document.getElementById("exportBtn");
+  var managerBtn = document.getElementById("managerBtn");
 
   function ready() { return !!APPS_SCRIPT_URL; }
 
@@ -522,6 +528,28 @@
       if (!data || data.ok === false) throw new Error((data && data.error) || "request failed");
       return data;
     });
+  }
+
+  function sheetPost(payload) {
+    return fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    }).then(function (res) {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }).then(function (data) {
+      if (!data || data.ok === false) throw new Error((data && data.error) || "request failed");
+      return data;
+    });
+  }
+
+  function sheetManagerLogin(email, pin) {
+    return sheetPost({ action: "managerLogin", managerEmail: email, pin: pin });
+  }
+
+  function sheetManagerCancel(id) {
+    return sheetPost({ action: "managerCancel", id: id, managerEmail: manager.email, pin: manager.pin });
   }
 
   function sheetDelete(id) {
@@ -828,6 +856,7 @@
 
     var mine = !!myId && b.bookedById === myId;
     var pending = isPending(b);
+    var canManage = !mine && !!manager && manager.rooms.indexOf(b.room) !== -1;
 
     modalRoot.innerHTML =
       '<div class="overlay" id="ovl">' +
@@ -846,7 +875,9 @@
             (mine
               ? '<button class="btn danger" id="btnCancelBooking">' +
                 (pending ? "Withdraw request" : "Cancel booking") + "</button>"
-              : "") +
+              : canManage
+                ? '<button class="btn danger" id="btnCancelBooking">Cancel as manager</button>'
+                : "") +
           "</div>" +
         "</div>" +
       "</div>";
@@ -856,13 +887,14 @@
 
     var cancelBtn = document.getElementById("btnCancelBooking");
     if (!cancelBtn) return;
-    var cancelLabel = pending ? "Withdraw request" : "Cancel booking";
-    var cancellingLabel = pending ? "Withdrawing…" : "Cancelling…";
+    var cancelLabel = !mine ? "Cancel as manager" : (pending ? "Withdraw request" : "Cancel booking");
+    var cancellingLabel = pending && mine ? "Withdrawing…" : "Cancelling…";
 
     cancelBtn.addEventListener("click", function () {
+      if (!mine && !window.confirm("Cancel " + (b.bookedByName || "this") + "'s booking? They will be emailed.")) return;
       cancelBtn.disabled = true;
       cancelBtn.textContent = cancellingLabel;
-      sheetDelete(b.id).then(function () {
+      (mine ? sheetDelete(b.id) : sheetManagerCancel(b.id)).then(function () {
         closeModal();
         refreshNow();
       }).catch(function (err) {
@@ -872,6 +904,82 @@
           "Couldn't do that (" + formatError(err) + ").";
       });
     });
+  }
+
+  /* ---------- Manager mode ---------- */
+
+  function renderManagerBtn() {
+    managerBtn.textContent = manager ? "Manager: " + manager.name : "Manager login";
+  }
+
+  function signOutManager() {
+    manager = null;
+    try { sessionStorage.removeItem("roomScheduler.manager"); } catch (e) {}
+    renderManagerBtn();
+    closeModal();
+  }
+
+  function openManagerModal() {
+    if (!ready()) { setStatus("Manager login needs the Apps Script URL."); return; }
+
+    if (manager) {
+      var names = manager.rooms.map(function (id) { var r = roomById(id); return r ? r.name : id; });
+      modalRoot.innerHTML =
+        '<div class="overlay" id="ovl"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="gTitle">' +
+          '<h2 id="gTitle">Manager mode</h2>' +
+          '<div class="sub">' + escapeHtml(manager.email) + "</div>" +
+          '<div class="view-row"><span class="lbl">Rooms</span>' + escapeHtml(names.join(", ")) + "</div>" +
+          '<div class="view-row">Open any booking for these rooms to cancel it.</div>' +
+          '<div class="modal-actions"><div class="left"><button class="btn" id="btnClose">Close</button></div>' +
+          '<button class="btn danger" id="btnSignOut">Sign out</button></div>' +
+        "</div></div>";
+      document.getElementById("btnClose").addEventListener("click", closeModal);
+      document.getElementById("btnSignOut").addEventListener("click", signOutManager);
+      wireModalDismiss();
+      return;
+    }
+
+    modalRoot.innerHTML =
+      '<div class="overlay" id="ovl"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="gTitle">' +
+        '<h2 id="gTitle">Manager login</h2>' +
+        '<div class="sub">Approvers can cancel bookings for their rooms.</div>' +
+        '<label for="gEmail">Approver email</label>' +
+        '<input type="email" id="gEmail" value="' + escapeHtml(myEmail) + '">' +
+        '<label for="gPin">PIN</label>' +
+        '<input type="password" id="gPin" autocomplete="off">' +
+        '<div class="warn" id="gWarn" role="alert"></div>' +
+        '<div class="modal-actions"><div class="left"><button class="btn" id="btnClose">Cancel</button></div>' +
+        '<button class="btn primary" id="btnSignIn">Sign in</button></div>' +
+      "</div></div>";
+
+    var emailEl = document.getElementById("gEmail");
+    var pinEl = document.getElementById("gPin");
+    var warnEl = document.getElementById("gWarn");
+    var btn = document.getElementById("btnSignIn");
+    document.getElementById("btnClose").addEventListener("click", closeModal);
+    wireModalDismiss();
+    (emailEl.value ? pinEl : emailEl).focus();
+
+    function signIn() {
+      var email = emailEl.value.trim(), pin = pinEl.value.trim();
+      warnEl.textContent = "";
+      if (!email || !pin) { warnEl.textContent = "Enter your approver email and PIN."; return; }
+      btn.disabled = true;
+      btn.textContent = "Checking…";
+      sheetManagerLogin(email, pin).then(function (data) {
+        manager = { email: email.toLowerCase(), pin: pin, name: data.name || email, rooms: data.rooms || [] };
+        try { sessionStorage.setItem("roomScheduler.manager", JSON.stringify(manager)); } catch (e) {}
+        renderManagerBtn();
+        closeModal();
+        setStatus("Manager mode on. Open a booking for your rooms to cancel it.");
+      }).catch(function (err) {
+        btn.disabled = false;
+        btn.textContent = "Sign in";
+        warnEl.textContent = formatError(err, "Couldn't sign in.");
+      });
+    }
+    btn.addEventListener("click", signIn);
+    pinEl.addEventListener("keydown", function (e) { if (e.key === "Enter") signIn(); });
   }
 
   /* ---------- CSV export ---------- */
@@ -959,6 +1067,8 @@
     renderRoomsKey();
     renderDayTabs();
     renderGridShell();
+    renderManagerBtn();
+    managerBtn.addEventListener("click", openManagerModal);
 
     // Week / day navigation
     document.getElementById("prevWeek").addEventListener("click", function () { shiftWeek(-7); });
