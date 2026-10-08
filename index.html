@@ -369,8 +369,6 @@
     <button class="btn" id="exportBtn">Export week as CSV (Excel)</button>
     <button class="btn" id="managerBtn">Manager login</button>
   </div>
-
-  </div>
   <div class="status-line" id="statusLine" role="status" aria-live="polite"></div>
 </main>
 
@@ -442,9 +440,12 @@
   }
 
   function escapeHtml(s) {
-    var d = document.createElement("div");
-    d.textContent = s == null ? "" : String(s);
-    return d.innerHTML;
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   function formatError(err, fallback) {
@@ -504,7 +505,10 @@
   /* ---------- Sheet API (Google Apps Script web app) ---------- */
 
   function sheetList(dateIso) {
-    var url = APPS_SCRIPT_URL + "?date=" + encodeURIComponent(dateIso);
+    // deviceId lets the server mark this device's own bookings with `mine`
+    // without ever exposing the raw bookedById credential to any client.
+    var url = APPS_SCRIPT_URL + "?date=" + encodeURIComponent(dateIso) +
+      "&deviceId=" + encodeURIComponent(myId);
     return fetch(url).then(function (res) {
       if (!res.ok) throw new Error("HTTP " + res.status);
       return res.json();
@@ -556,7 +560,7 @@
     return fetch(APPS_SCRIPT_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action: "delete", id: id })
+      body: JSON.stringify({ action: "delete", id: id, bookedById: myId })
     }).then(function (res) {
       if (!res.ok) throw new Error("HTTP " + res.status);
       return res.json();
@@ -640,7 +644,7 @@
 
       var el = document.createElement("div");
       el.className = "booking-block" +
-        (myId && b.bookedById === myId ? " mine" : "") +
+        (b.mine ? " mine" : "") +
         (isPending(b) ? " pending" : "");
       el.style.gridColumn = String(colIndex + 2);
       el.style.gridRow = (start + 2) + " / " + (end + 2);
@@ -704,8 +708,8 @@
             startSlot: Number(data.startSlot),
             endSlot: Number(data.endSlot),
             title: data.title,
-            bookedById: data.bookedById || null,
             bookedByName: data.bookedByName || "",
+            mine: !!data.mine,
             status: (data.status || "Approved")
           };
         });
@@ -854,7 +858,7 @@
     var room = roomById(b.room);
     if (!room) return;
 
-    var mine = !!myId && b.bookedById === myId;
+    var mine = !!b.mine;
     var pending = isPending(b);
     var canManage = !mine && !!manager && manager.rooms.indexOf(b.room) !== -1;
 
